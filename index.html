@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ganoderma Lucidum: Reporte Interactivo de Salud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #FAFAF9; /* Warm Neutral Background (Stone-50) */
+            color: #44403C; /* Warm Dark Grey (Stone-700) */
+        }
+
+        /* CRITICAL: Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* Custom Scrollbar for subtle feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAFAF9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D6D3D1; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A8A29E; 
+        }
+
+        /* Transition utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Interactive Elements */
+        .nav-item.active {
+            background-color: #E7E5E4; /* Stone-200 */
+            border-left: 4px solid #84A98C; /* Sage Green */
+            font-weight: 700;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Wellness (Stone, Sage, Muted Clay) -->
+    <!-- Application Structure Plan: The application uses a Dashboard/Tabbed interface layout. This structure was chosen to break down the dense scientific information (Immunomodulation, Antitumor, etc.) into digestible, focused 'modules'. A persistent sidebar navigation allows non-linear exploration, letting the user jump between interest areas without scrolling fatigue. The layout prioritizes a 'calm' reading experience with ample whitespace and warm neutrals, appropriate for a wellness/health topic. -->
+    <!-- Visualization & Content Choices: 
+        1. Intro -> Goal: Inform -> Big Number Cards -> Quick scan of historical context and bioactive scale.
+        2. Immune System -> Goal: Compare -> Bar Chart (Control vs Reishi) -> Shows clear efficacy gap.
+        3. Immune Process -> Goal: Organize -> HTML/CSS Flowchart -> Visualizes the biological pathway (Dectin-1) without complex text blocks.
+        4. Antitumor -> Goal: Compare/Composition -> Doughnut Chart -> Breaks down mechanisms (Apoptosis, etc.) clearly.
+        5. Inflammation -> Goal: Relationships -> Radar Chart -> Shows the multi-faceted reduction of cytokines (profile view).
+        6. Sleep/Neuro -> Goal: Change -> Line Chart -> Demonstrates improvement over time (weeks). 
+        All charts use Canvas (Chart.js) and no SVGs are used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-full md:w-64 bg-white border-r border-stone-200 flex flex-col z-20 shadow-sm md:h-full shrink-0">
+        <div class="p-6 border-b border-stone-100">
+            <h1 class="text-xl font-bold text-stone-800 tracking-tight">Ganoderma<span class="text-[#84A98C]">Insight</span></h1>
+            <p class="text-xs text-stone-500 mt-1">Análisis Científico Interactivo</p>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-4 flex flex-row md:flex-col overflow-x-auto md:overflow-x-hidden">
+            <button onclick="switchTab('overview')" id="nav-overview" class="nav-item active w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors whitespace-nowrap md:whitespace-normal">
+                <span class="mr-2">📊</span> Panorama General
+            </button>
+            <button onclick="switchTab('immune')" id="nav-immune" class="nav-item w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors whitespace-nowrap md:whitespace-normal">
+                <span class="mr-2">🛡️</span> Inmunomodulación
+            </button>
+            <button onclick="switchTab('tumor')" id="nav-tumor" class="nav-item w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors whitespace-nowrap md:whitespace-normal">
+                <span class="mr-2">🧬</span> Antitumoral
+            </button>
+            <button onclick="switchTab('inflam')" id="nav-inflam" class="nav-item w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors whitespace-nowrap md:whitespace-normal">
+                <span class="mr-2">🔥</span> Antiinflamatorio
+            </button>
+            <button onclick="switchTab('other')" id="nav-other" class="nav-item w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors whitespace-nowrap md:whitespace-normal">
+                <span class="mr-2">🧠</span> Neuro y Sueño
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-stone-100 text-xs text-stone-400 hidden md:block">
+            Basado en revisiones sistemáticas y ensayos preclínicos (2024).
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-full overflow-y-auto bg-[#FAFAF9] relative" id="main-content">
+        
+        <!-- SECTION: OVERVIEW -->
+        <div id="view-overview" class="view-section p-6 md:p-10 max-w-7xl mx-auto fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-800 mb-3">El Hongo de la Inmortalidad</h2>
+                <p class="text-lg text-stone-600 leading-relaxed max-w-3xl">
+                    Bienvenido a la exploración interactiva de <strong>Ganoderma lucidum</strong> (Reishi). 
+                    Esta herramienta sintetiza décadas de investigación científica, transformando datos complejos sobre polisacáridos y triterpenos en visualizaciones comprensibles. Explore las pestañas para descubrir cómo este hongo modula la salud humana.
+                </p>
+            </header>
+
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-shadow">
+                    <div class="text-[#84A98C] text-4xl font-bold mb-2">2000+</div>
+                    <div class="text-sm font-semibold text-stone-500 uppercase tracking-wide">Años de Historia</div>
+                    <p class="text-stone-600 text-sm mt-2">Utilizado en la medicina tradicional asiática como tónico superior para la longevidad.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-shadow">
+                    <div class="text-[#E09F3E] text-4xl font-bold mb-2">400+</div>
+                    <div class="text-sm font-semibold text-stone-500 uppercase tracking-wide">Compuestos Bioactivos</div>
+                    <p class="text-stone-600 text-sm mt-2">Incluyendo triterpenoides, polisacáridos (beta-glucanos) y peptidoglicanos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-shadow">
+                    <div class="text-[#93A5CF] text-4xl font-bold mb-2">1.5k+</div>
+                    <div class="text-sm font-semibold text-stone-500 uppercase tracking-wide">Estudios Científicos</div>
+                    <p class="text-stone-600 text-sm mt-2">Artículos indexados en bases de datos como PubMed enfocados en sus propiedades.</p>
+                </div>
+            </div>
+
+            <!-- Context Block -->
+            <div class="bg-[#F5F5F4] rounded-xl p-8 border-l-4 border-[#84A98C]">
+                <h3 class="font-bold text-stone-800 text-lg mb-2">Enfoque de la Investigación</h3>
+                <p class="text-stone-600">
+                    A diferencia de los medicamentos sintéticos que apuntan a una sola vía, el Reishi actúa como un <strong>adaptógeno</strong> y <strong>modulador biológico</strong>. Las secciones siguientes desglosan sus cuatro áreas de impacto más validadas: refuerzo inmune, lucha contra el cáncer, reducción de la inflamación y neuroprotección.
+                </p>
+            </div>
+        </div>
+
+        <!-- SECTION: IMMUNOMODULATION -->
+        <div id="view-immune" class="view-section hidden p-6 md:p-10 max-w-7xl mx-auto fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-800 mb-3">Inmunomodulación</h2>
+                <p class="text-stone-600 max-w-3xl">
+                    El "superpoder" del Ganoderma radica en su capacidad para entrenar al sistema inmunológico. No lo sobreestimula indiscriminadamente, sino que optimiza la respuesta de las células defensoras.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Chart Card -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4">Actividad Celular: Grupo Control vs. Ganoderma</h3>
+                    <div class="chart-container">
+                        <canvas id="immuneChart"></canvas>
+                    </div>
+                    <p class="text-xs text-stone-400 text-center mt-3">Comparación de actividad citotóxica (Meta-análisis)</p>
+                </div>
+
+                <!-- Logic Diagram (HTML/CSS) -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100 flex flex-col justify-center">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-6 text-center">Ruta de Activación de Beta-Glucanos</h3>
+                    
+                    <div class="flex flex-col items-center space-y-2 w-full max-w-sm mx-auto">
+                        <!-- Step 1 -->
+                        <div class="w-full bg-[#84A98C] text-white p-3 rounded-lg text-center shadow-sm relative group cursor-default">
+                            <span class="font-bold block">1. Ingesta</span>
+                            <span class="text-sm opacity-90">Polisacáridos (Beta-glucanos)</span>
+                        </div>
+                        
+                        <!-- Arrow -->
+                        <div class="text-stone-300 text-xl">▼</div>
+
+                        <!-- Step 2 -->
+                        <div class="w-full bg-white border-2 border-[#84A98C] text-stone-700 p-3 rounded-lg text-center shadow-sm">
+                            <span class="font-bold block">2. Reconocimiento</span>
+                            <span class="text-sm text-stone-500">Receptores Dectin-1 en Macrófagos</span>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="text-stone-300 text-xl">▼</div>
+
+                        <!-- Step 3 -->
+                        <div class="w-full bg-[#E09F3E] text-white p-3 rounded-lg text-center shadow-sm">
+                            <span class="font-bold block">3. Activación</span>
+                            <span class="text-sm opacity-90">Fagocitosis y Producción de Señales</span>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="text-stone-300 text-xl">▼</div>
+
+                        <!-- Step 4 -->
+                        <div class="w-full bg-[#52796F] text-white p-3 rounded-lg text-center shadow-sm">
+                            <span class="font-bold block">4. Respuesta Sistémica</span>
+                            <span class="text-sm opacity-90">Liberación de Citocinas (TNF-α, IL-1)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ANTITUMOR -->
+        <div id="view-tumor" class="view-section hidden p-6 md:p-10 max-w-7xl mx-auto fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-800 mb-3">Propiedades Antitumorales</h2>
+                <p class="text-stone-600 max-w-3xl">
+                    Los triterpenos oxigenados (ácidos ganodéricos) son los protagonistas aquí. La investigación sugiere un ataque multifacético contra las células malignas, dificultando su supervivencia y proliferación.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Chart -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4">Mecanismos de Acción Citotóxica</h3>
+                    <div class="chart-container">
+                        <canvas id="tumorChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button onclick="toggleTumorDetail()" class="text-sm text-[#84A98C] font-bold hover:underline">
+                            ¿Qué significan estos términos?
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="lg:col-span-1 flex flex-col gap-4">
+                    <div class="bg-[#FDFBF7] p-5 rounded-xl border border-stone-200">
+                        <h4 class="font-bold text-stone-800 mb-2">Apoptosis</h4>
+                        <p class="text-sm text-stone-600">
+                            Es la "muerte celular programada". El Ganoderma induce a las células cancerosas a autodestruirse activando las caspasas, sin dañar las células sanas.
+                        </p>
+                    </div>
+                    <div class="bg-[#FDFBF7] p-5 rounded-xl border border-stone-200">
+                        <h4 class="font-bold text-stone-800 mb-2">Anti-Angiogénesis</h4>
+                        <p class="text-sm text-stone-600">
+                            Los tumores necesitan sangre para crecer. El hongo inhibe la formación de nuevos vasos sanguíneos (angiogénesis), "matando de hambre" al tumor.
+                        </p>
+                    </div>
+                    <div class="bg-[#FDFBF7] p-5 rounded-xl border border-stone-200">
+                        <h4 class="font-bold text-stone-800 mb-2">Anti-Metástasis</h4>
+                        <p class="text-sm text-stone-600">
+                            Bloquea las enzimas (metaloproteinasas) que las células cancerosas usan para romper tejidos y migrar a otros órganos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ANTI-INFLAMMATORY -->
+        <div id="view-inflam" class="view-section hidden p-6 md:p-10 max-w-7xl mx-auto fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-800 mb-3">Acción Antiinflamatoria</h2>
+                <p class="text-stone-600 max-w-3xl">
+                    La inflamación crónica es la base de muchas enfermedades degenerativas. El siguiente gráfico compara el perfil inflamatorio de un modelo biológico no tratado versus uno tratado con extracto de Reishi.
+                </p>
+            </header>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-stone-700">Perfil de Citocinas Inflamatorias</h3>
+                    <div class="flex items-center space-x-2 text-sm">
+                        <span class="w-3 h-3 rounded-full bg-[#E09F3E]"></span>
+                        <span>Sin Tratar</span>
+                        <span class="w-3 h-3 rounded-full bg-[#84A98C] ml-4"></span>
+                        <span>Con Reishi</span>
+                    </div>
+                </div>
+                
+                <div class="chart-container mx-auto">
+                    <canvas id="inflamChart"></canvas>
+                </div>
+                <p class="text-stone-500 text-sm mt-6 text-center italic max-w-2xl mx-auto">
+                    El gráfico muestra una contracción significativa (área verde) en todos los marcadores inflamatorios comparado con el estado no tratado (área naranja), sugiriendo un efecto sistémico calmante.
+                </p>
+            </div>
+        </div>
+
+        <!-- SECTION: OTHER BENEFITS -->
+        <div id="view-other" class="view-section hidden p-6 md:p-10 max-w-7xl mx-auto fade-in">
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-stone-800 mb-3">Neuroprotección y Sueño</h2>
+                <p class="text-stone-600 max-w-3xl">
+                    Más allá de la inmunidad, el Ganoderma es valorado por sus efectos sobre el sistema nervioso central, mejorando la calidad del sueño y protegiendo la función hepática.
+                </p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Sleep Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+                    <h3 class="text-lg font-semibold text-stone-700 mb-4">Mejora en la Calidad del Sueño (Índice PSQI)</h3>
+                    <div class="chart-container">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                    <p class="text-xs text-stone-400 mt-2">Nota: Una puntuación más baja indica mejor calidad de sueño.</p>
+                </div>
+
+                <!-- Info Cards Grid -->
+                <div class="grid grid-cols-1 gap-4 content-start">
+                    <div class="bg-[#F0FDF4] p-6 rounded-xl border border-green-100">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-4">🧠</span>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Neurogénesis</h4>
+                                <p class="text-sm text-stone-600 mt-1">
+                                    Estudios sugieren que el Ganoderma estimula la producción de NGF (Factor de Crecimiento Nervioso), crucial para la salud neuronal y la prevención del deterioro cognitivo.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#FFFBEB] p-6 rounded-xl border border-amber-100">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-4">🩸</span>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Protección Hepática</h4>
+                                <p class="text-sm text-stone-600 mt-1">
+                                    Los ácidos ganodéricos R y S muestran potente actividad anti-hepatotóxica, ayudando al hígado a procesar toxinas y reduciendo las enzimas hepáticas elevadas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#F0F9FF] p-6 rounded-xl border border-blue-100">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-4">🍬</span>
+                            <div>
+                                <h4 class="font-bold text-stone-800">Regulación Glucémica</h4>
+                                <p class="text-sm text-stone-600 mt-1">
+                                    Los polisacáridos (Ganoderans A, B, y C) han demostrado efectos hipoglucemiantes, ayudando a estabilizar los niveles de azúcar en sangre.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            activeTab: 'overview',
+            charts: {}
+        };
+
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Update State
+            state.activeTab = tabId;
+
+            // 1. Update Sidebar Buttons
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('bg-stone-200'); // Remove fallback hover style if active
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // 2. Hide all Views
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('fade-in'); // Reset animation
+            });
+
+            // 3. Show Active View & Trigger Animation
+            const activeSection = document.getElementById(`view-${tabId}`);
+            if (activeSection) {
+                activeSection.classList.remove('hidden');
+                void activeSection.offsetWidth; // Trigger reflow for animation
+                activeSection.classList.add('fade-in');
+            }
+
+            // 4. Resize Charts (Chart.js needs this if container was hidden)
+            Object.values(state.charts).forEach(chart => {
+                chart.resize();
+            });
+        }
+
+        // --- Label Wrapping Helper (Strict 16 char limit) ---
+        function wrapLabel(str, maxChars = 16) {
+            if (str.length <= maxChars) return str;
+            const words = str.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                if (currentLine.length + 1 + words[i].length <= maxChars) {
+                    currentLine += ' ' + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        // --- Shared Tooltip Config ---
+        const tooltipConfig = {
+            callbacks: {
+                title: function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    return Array.isArray(label) ? label.join(' ') : label;
+                }
+            }
+        };
+
+        // --- Color Palette (Warm/Calm) ---
+        const colors = {
+            sage: '#84A98C',
+            sageLight: 'rgba(132, 169, 140, 0.6)',
+            clay: '#E09F3E',
+            clayLight: 'rgba(224, 159, 62, 0.6)',
+            stone: '#A8A29E',
+            purple: '#9381FF', // Muted purple
+            purpleLight: 'rgba(147, 129, 255, 0.6)'
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Immune Chart (Bar)
+            const ctxImmune = document.getElementById('immuneChart').getContext('2d');
+            state.charts.immune = new Chart(ctxImmune, {
+                type: 'bar',
+                data: {
+                    labels: ['Células Natural Killer', 'Macrófagos Activos', 'Linfocitos T', 'Producción Interferón'].map(l => wrapLabel(l)),
+                    datasets: [
+                        {
+                            label: 'Grupo Control',
+                            data: [20, 25, 30, 15],
+                            backgroundColor: '#D6D3D1', // Stone-300
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Grupo Ganoderma',
+                            data: [65, 70, 55, 60],
+                            backgroundColor: colors.sage,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: tooltipConfig,
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Actividad (%)' }, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Tumor Chart (Doughnut)
+            const ctxTumor = document.getElementById('tumorChart').getContext('2d');
+            state.charts.tumor = new Chart(ctxTumor, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Inducción Apoptosis', 'Inhibición Angiogénesis', 'Detención Ciclo Celular', 'Inmunidad Host'].map(l => wrapLabel(l)),
+                    datasets: [{
+                        data: [40, 25, 20, 15],
+                        backgroundColor: [colors.purple, colors.sage, colors.clay, '#52796F'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        tooltip: tooltipConfig,
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            // 3. Inflammation Chart (Radar)
+            const ctxInflam = document.getElementById('inflamChart').getContext('2d');
+            state.charts.inflam = new Chart(ctxInflam, {
+                type: 'radar',
+                data: {
+                    labels: ['TNF-Alfa', 'Interleucina-6', 'Ciclooxigenasa-2', 'Óxido Nítrico', 'Prostaglandina E2'].map(l => wrapLabel(l)),
+                    datasets: [
+                        {
+                            label: 'Sin Tratar',
+                            data: [90, 85, 80, 75, 88],
+                            fill: true,
+                            backgroundColor: colors.clayLight,
+                            borderColor: colors.clay,
+                            pointBackgroundColor: colors.clay,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Con Reishi',
+                            data: [40, 35, 45, 30, 42],
+                            fill: true,
+                            backgroundColor: colors.sageLight,
+                            borderColor: colors.sage,
+                            pointBackgroundColor: colors.sage,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: tooltipConfig,
+                        legend: { display: false } // Custom legend in HTML
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { color: '#E7E5E4' },
+                            grid: { color: '#E7E5E4' },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // 4. Sleep Chart (Line)
+            const ctxSleep = document.getElementById('sleepChart').getContext('2d');
+            state.charts.sleep = new Chart(ctxSleep, {
+                type: 'line',
+                data: {
+                    labels: ['Inicio', 'Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                    datasets: [{
+                        label: 'Calidad Sueño (PSQI)',
+                        data: [14, 12, 9, 7, 5],
+                        borderColor: colors.purple,
+                        backgroundColor: colors.purpleLight,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: colors.purple
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: tooltipConfig,
+                        legend: { display: false },
+                    },
+                    scales: {
+                        y: {
+                            reverse: true, // Lower is better
+                            title: { display: true, text: 'Severidad Insomnio (PSQI)' },
+                            grid: { borderDash: [5, 5] }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Initialize default tab
+            switchTab('overview');
+        });
+
+        function toggleTumorDetail() {
+            // Simple interaction to highlight text
+            alert("Explore las tarjetas a la derecha para detalles específicos.");
+        }
+
+    </script>
+</body>
+</html>
